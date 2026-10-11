@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta http-equiv="content-language" content="en">
+  <meta name="google" value="notranslate">
+  <title>Thunder - 100% Telugu Entertainment</title>
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="description" content="Thunder - Watch & Download Telugu movies in excellent quality.">
+  <meta property="og:title" content="Thunder - Watch & Download Telugu movies">
+  <meta property="og:description" content="Thunder web app. Watch and Download Telugu movies in an excellent quality at the smallest file size.">
+  <meta name="theme-color" content="#1d1d1d">
+  
+  <style>
+    @font-face{font-family:Raleway;font-style:normal;font-weight:400;src:local(''),url(https://akamai-aws-s3-ibin-bucket.lokicdn.com/font/raleway-v22-latin-regular.woff2) format('woff2');font-display:swap}
+    body{width:100vw;height:100vh;margin:0;padding:0;background:#1d1d1d;font-family:Raleway,Helvetica,Arial,sans-serif;color:#373737}
+    *{box-sizing:border-box;font-family:Raleway,Helvetica,Arial,sans-serif}
+    .container{width:600px;transform:translate(-50%,-50%);top:45%;left:50%;position:absolute;background:#222;display:flex;align-items:center;justify-content:flex-start;flex-direction:column;padding:30px 0;border-radius:5px;border:1px solid #2f2f2f;box-shadow:#111 0 0 8px 0}
+    .pp-static-teaser{position:fixed;right:0;top:0;padding:8px 10px;background:#333;font-size:12px;display:flex;justify-content:center;align-items:center;margin-top:15px;color:red;border-top-left-radius:4px;border-bottom-left-radius:4px}
+    #logo{width:150px;height:60px;text-align:center}
+    .inner-container{width:100%}
+    .bottom{text-align:center;max-width:90%;margin:0 auto}
+    .bottom p.subtitle{color:#ccc;letter-spacing:.1em;font-size:16px;line-height:1.4;margin:1em auto 1.5em}
+    .buttons{width:100%;display:flex;justify-content:center;flex-wrap:wrap;align-items:center}
+    .buttons button{padding:10px 20px;font-size:18px;background-color:red;border:0;cursor:pointer;border-radius:4px;letter-spacing:.1em;color:#fff;transition:all .25s ease-in-out}
+    .buttons button:hover{background-color:black}
+    .desc p{font-size:12px;color:#ccc}
+    .desc p a{color:#ccc;text-decoration:none}
+    
+    /* Top Buttons Styling */
+    .share-circle-btn {
+      position: absolute; top: 10px; right: 10px; width: 40px; height: 40px;
+      border-radius: 50%; background: #444; border: 1px solid #555;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;
+    }
+    .share-circle-btn:hover { background: black; }
+    .share-circle-btn img, .share-circle-btn svg { width: 20px; height: 20px; fill: #fff; }
+
+    .toggle-circle-btn { 
+      position: absolute; top: 10px; left: 10px; width: 40px; height: 40px; 
+      border-radius: 50%; background: #444; border: 1px solid #555; 
+      cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; 
+    } 
+    .toggle-circle-btn:hover { background: black; }
+    .toggle-svg { width: 20px; height: 20px; }
+    .track-path { fill: none; stroke: #fff; stroke-width: 40px; transition: fill 0.3s ease; }
+    .slider-circle { fill: #fff; transform-origin: center; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .toggle-circle-btn.active .slider-circle { transform: translate(192px, 0); }
+    .toggle-circle-btn.active .track-path { fill: red; }
+
+    #build-info { font-size: 10px; color: #666; margin-top: 10px; }
+
+    @media only screen and (max-width:600px){.container{width:90%}}
+    @media only screen and (max-width:480px){.container{padding:20px}.buttons button{width:100%}}
+  </style>
+</head>
+<body>
+
+<!-- Toggle Button (Top Left) -->
+<button id="toggleBtn" class="toggle-circle-btn" title="Toggle Mode">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="toggle-svg">
+    <path class="track-path" d="M608 320C608 214 522 128 416 128L224 128C118 128 32 214 32 320C32 426 118 512 224 512L416 512C522 512 608 426 608 320z"></path>
+    <path class="slider-circle" d="M224 400C268.2 400 304 364.2 304 320C304 275.8 268.2 240 224 240C179.8 240 144 275.8 144 320C144 364.2 179.8 400 224 400z"></path>
+  </svg>
+</button>
+
+<!-- Share Button (Top Right) -->
+<button id="shareBtn" class="share-circle-btn" title="Share Link">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+    <path d="M371.8 82.4C359.8 87.4 352 99 352 112L352 192L240 192C142.8 192 64 270.8 64 368C64 481.3 145.5 531.9 164.2 542.1C166.7 543.5 169.5 544 172.3 544C183.2 544 192 535.1 192 524.3C192 516.8 187.7 509.9 182.2 504.8C172.8 496 160 478.4 160 448.1C160 395.1 203 352.1 256 352.1L352 352.1L352 432.1C352 445 359.8 456.7 371.8 461.7C383.8 466.7 397.5 463.9 406.7 454.8L566.7 294.8C579.2 282.3 579.2 262 566.7 249.5L406.7 89.5C397.5 80.3 383.8 77.6 371.8 82.6z"></path>
+  </svg>
+</button>
+
+<div class="container">
+  <div class="pp-static-teaser" id="app-version-badge">v 3.9</div>
+  
+  <div class="inner-container">
+    <div class="bottom">
+      <div class="ib-logo">
+        <svg alt="THUNDER" id="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 120" height="100%">
+          <g transform="translate(10, -5) scale(0.22)">
+            <path fill="#FF0000" d="M328.7 180.7c-3.6 5.4-8.8 12.9-11.5 16.8-2.6 3.8-9 13.1-14.2 20.5-25.8 37.4-60 86.8-75.4 109-3.7 5.2-10.9 15.6-16 23l-9.4 13.5 36.6.5 36.7.5-.3 4.5c-.1 2.5-2.9 22.3-6.2 44-3.2 21.7-6.1 42.4-6.5 46-.3 3.6-.9 7.3-1.1 8.2-.5 1.7.6 1.8 13.8 1.8h14.4l17.9-21.7c9.9-12 20-24.1 22.5-26.9 2.5-2.9 8-9.4 12.2-14.6 20.5-24.8 55.5-66.8 58.7-70.4 2-2.3 7.2-8.6 11.6-13.9 4.4-5.4 11.7-14.2 16.3-19.5 4.5-5.4 8.2-10.1 8.2-10.4s-19.5-.6-43.4-.6-43.7-.4-44-.8c-.5-.9 1.3-16.1 8.3-70.2 2.7-20.6 5.2-40.1 5.5-43.3l.6-5.7h-28.7z"></path>
+          </g>
+          <text x="130" y="85" font-family="system-ui, sans-serif" font-size="52" font-weight="900" fill="#FF0000" letter-spacing="2">THUNDER</text>
+        </svg>
+      </div>
+      
+      <p class="subtitle" id="app-subtitle">100% Telugu Entertainment</p>
+      
+      <div class="buttons">
+        <button id="action-btn" onclick="handleEnterClick()">ENTER</button>
+      </div>
+      
+      <div class="desc">
+        <p id="app-desc">Watch &amp; download <a>Thunder Telugu movies</a> in an excellent quality <br>@ smallest file size for smartphones, tablets, PC's.</p>
+      </div>
+      <div id="build-info"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let isAppActive = true;
+  let isToggleOn = false;
+
+  // Populated by Native Android Kotlin code on launch
+  function applyAppConfig(configJson, buildMeta) {
+    try {
+      const config = JSON.parse(configJson);
+      document.getElementById('app-version-badge').innerText = config.app_version || 'v 3.9';
+      isAppActive = config.app_active;
+
+      if (!isAppActive) {
+        document.getElementById('app-subtitle').innerText = config.notice_message || "App no longer available.";
+        document.getElementById('action-btn').innerText = "INSTALL";
+        document.getElementById('app-desc').style.display = "none";
+      }
+
+      if (buildMeta) {
+        document.getElementById('build-info').innerText = buildMeta;
+      }
+    } catch (e) {
+      console.error("Config parse error", e);
+    }
+  }
+
+  // Handle ENTER button click
+  function handleEnterClick() {
+    if (window.AndroidBridge) {
+      window.AndroidBridge.onEnterClicked(isAppActive, isToggleOn);
+    }
+  }
+
+  // Handle Share button click
+  document.getElementById('shareBtn').addEventListener('click', () => {
+    if (window.AndroidBridge) {
+      window.AndroidBridge.onShareClicked();
+    }
+  });
+
+  // Handle Toggle Button click
+  const toggleBtn = document.getElementById('toggleBtn');
+  toggleBtn.addEventListener('click', () => {
+    toggleBtn.classList.toggle('active');
+    isToggleOn = toggleBtn.classList.contains('active');
+    
+    if (window.AndroidBridge) {
+      window.AndroidBridge.onToggleChanged(isToggleOn);
+    }
+  });
+
+  // Function called by Native code to update the container content when Toggle is ON/OFF
+  function updateContainerContent(newHtmlContent) {
+    if (newHtmlContent) {
+      document.querySelector('.container').innerHTML = newHtmlContent;
+    }
+  }
+</script>
+</body>
+</html>
