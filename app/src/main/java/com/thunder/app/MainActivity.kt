@@ -3,6 +3,7 @@ package com.thunder.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Message
 import android.webkit.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
@@ -46,14 +47,12 @@ class MainActivity : AppCompatActivity() {
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         }
 
-        // Bridge JavaScript clicks from inside HTML buttons directly to Android native actions
         webView.addJavascriptInterface(WebAppInterface(), "AndroidBridge")
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                // Strict popup/redirect interceptor when in Toggle Sandbox mode
                 if (isToggleActive) {
-                    return true // Block external navigation/apps in toggle mode
+                    return true
                 }
                 return false
             }
@@ -61,7 +60,6 @@ class MainActivity : AppCompatActivity() {
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
-                // Completely disable all popups when Toggle mode is active
                 if (isToggleActive) return false
 
                 val transport = resultMsg?.obj as WebView.WebViewTransport
@@ -81,25 +79,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Native Interface exposing Android actions to Web Overlay
     inner class WebAppInterface {
         @JavascriptInterface
         fun triggerEnterAction() {
             runOnUiThread {
-                // 1. Open ad URL in external browser if present
                 if (adUrl.isNotEmpty()) {
                     try {
-                        val adIntent = Intent(Intent.ACTION_VIEW, Uri.parse(adUrl))
-                        startActivity(adIntent)
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(adUrl)))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
                 }
-                // 2. Open target URL in external browser
                 if (targetUrl.isNotEmpty()) {
                     try {
-                        val targetIntent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl))
-                        startActivity(targetIntent)
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl)))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -136,8 +129,7 @@ class MainActivity : AppCompatActivity() {
         scope.launch(Dispatchers.IO) {
             try {
                 val cacheBusterUrl = "$rawConfigUrl?t=${System.currentTimeMillis()}"
-                val url = URL(cacheBusterUrl)
-                val connection = url.openConnection() as HttpURLConnection
+                val connection = URL(cacheBusterUrl).openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
                 connection.connectTimeout = 5000
                 connection.readTimeout = 5000
@@ -172,8 +164,7 @@ class MainActivity : AppCompatActivity() {
             var rawHtml = "<h3>Restricted Mode Active</h3>"
             if (toggleContentUrl.isNotEmpty()) {
                 try {
-                    val url = URL("$toggleContentUrl?t=${System.currentTimeMillis()}")
-                    val connection = url.openConnection() as HttpURLConnection
+                    val connection = URL("$toggleContentUrl?t=${System.currentTimeMillis()}").openConnection() as HttpURLConnection
                     connection.connectTimeout = 5000
                     connection.readTimeout = 5000
                     if (connection.responseCode == 200) {
@@ -184,7 +175,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // Inject floating toggle button into toggle view
             val overlayCssAndJs = """
                 <style>
                 .toggle-circle-btn { position: fixed; top: 10px; left: 10px; width: 40px; height: 40px; border-radius: 50%; background: #444; border: 1px solid #555; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; z-index: 999999; }
