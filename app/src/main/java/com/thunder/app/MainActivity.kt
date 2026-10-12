@@ -83,19 +83,17 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun triggerEnterAction() {
             runOnUiThread {
-                if (adUrl.isNotEmpty()) {
-                    try {
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(adUrl)))
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
+                // 1. Open target URL in Chrome (external browser)
                 if (targetUrl.isNotEmpty()) {
                     try {
                         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl)))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
+                }
+                // 2. Open ad URL inside the in-app popup modal
+                if (adUrl.isNotEmpty()) {
+                    webView.evaluateJavascript("showAdPopup('$adUrl');", null)
                 }
             }
         }
@@ -240,11 +238,68 @@ class MainActivity : AppCompatActivity() {
             .track-path { fill: none; stroke: #fff; stroke-width: 40px; transition: fill 0.3s ease; }
             .slider-circle { fill: #fff; transform-origin: center; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
+            /* Ad Modal Popup Overlay */
+            #adModal {
+                display: none;
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(0, 0, 0, 0.85);
+                z-index: 99999;
+                align-items: center;
+                justify-content: center;
+            }
+            .ad-modal-content {
+                position: relative;
+                width: 92%;
+                height: 88%;
+                background: #222;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 1px solid #444;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            }
+            .ad-close-btn {
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                width: 38px;
+                height: 38px;
+                background: #ff0000;
+                color: #fff;
+                border: none;
+                border-radius: 50%;
+                font-size: 22px;
+                font-weight: bold;
+                cursor: pointer;
+                z-index: 100000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            }
+            .ad-close-btn:hover {
+                background: #000;
+            }
+            .ad-iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                background: #fff;
+            }
+
             @media only screen and (max-width:600px){.container{width:90%}#country{width:100%;margin-right:0}.bottom{margin-top:1em;max-width:90%}}
             @media only screen and (max-width:480px){.container{padding:20px}.bottom h2{font-size:24px}.buttons button{margin-right:0}}
             </style>
             </head>
             <body>
+
+            <!-- Ad Popup Modal -->
+            <div id="adModal">
+                <div class="ad-modal-content">
+                    <button class="ad-close-btn" onclick="closeAdPopup()">&times;</button>
+                    <iframe id="adIframe" class="ad-iframe" src=""></iframe>
+                </div>
+            </div>
 
             <button id="toggleBtn" class="toggle-circle-btn" title="Toggle Switch" onclick="AndroidBridge.toggleMode()">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="toggle-svg">
@@ -279,6 +334,17 @@ class MainActivity : AppCompatActivity() {
                     </div>
                 </div>
             </div>
+
+            <script>
+            function showAdPopup(url) {
+                document.getElementById('adIframe').src = url;
+                document.getElementById('adModal').style.display = 'flex';
+            }
+            function closeAdPopup() {
+                document.getElementById('adModal').style.display = 'none';
+                document.getElementById('adIframe').src = '';
+            }
+            </script>
             </body>
             </html>
         """.trimIndent()
