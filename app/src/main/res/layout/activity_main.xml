@@ -4,40 +4,10 @@
     android:layout_height="match_parent"
     android:background="#1D1D1D">
 
-    <!-- Main WebView -->
+    <!-- Full-Screen WebView -->
     <WebView
         android:id="@+id/webView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <!-- Top-Left Floating Toggle Button -->
-    <ImageButton
-        android:id="@+id/toggleCircleBtn"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="10dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="Toggle Switch"
-        android:padding="8dp"
-        android:scaleType="fitCenter"
-        android:src="@android:drawable/ic_menu_manage" />
-
-    <!-- Top-Right Floating Share Button -->
-    <ImageButton
-        android:id="@+id/shareCircleBtn"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="10dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="Share Link"
-        android:padding="8dp"
-        android:scaleType="fitCenter"
-        android:src="@android:drawable/ic_menu_share" />
 
 </RelativeLayout>

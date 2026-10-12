@@ -3,10 +3,7 @@ package com.thunder.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Message
-import android.view.View
 import android.webkit.*
-import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
 import org.json.JSONObject
@@ -16,8 +13,6 @@ import java.net.URL
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
-    private lateinit var toggleCircleBtn: ImageButton
-    private lateinit var shareCircleBtn: ImageButton
 
     private var targetUrl: String = "https://moviesbooster.rf.gd/"
     private var adUrl: String = ""
@@ -37,37 +32,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webView)
-        toggleCircleBtn = findViewById(R.id.toggleCircleBtn)
-        shareCircleBtn = findViewById(R.id.shareCircleBtn)
 
         setupWebView()
         fetchRemoteConfig()
-
-        shareCircleBtn.setOnClickListener {
-            val shareIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, shareUrl)
-            }
-            startActivity(Intent.createChooser(shareIntent, "Share via"))
-        }
-
-        toggleCircleBtn.setOnClickListener {
-            isToggleActive = !isToggleActive
-            if (isToggleActive) {
-                // TOGGLE ON: Load sandbox content, block popup ads
-                shareCircleBtn.visibility = View.GONE
-                if (toggleContentUrl.isNotEmpty()) {
-                    webView.loadUrl(toggleContentUrl)
-                } else {
-                    webView.loadData("<h3>Restricted Mode Active</h3>", "text/html", "UTF-8")
-                }
-            } else {
-                // TOGGLE OFF: Restore home view
-                shareCircleBtn.visibility = View.VISIBLE
-                renderHomeView()
-            }
-        }
     }
 
     private fun setupWebView() {
@@ -79,13 +46,14 @@ class MainActivity : AppCompatActivity() {
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         }
 
+        // Bridge JavaScript clicks from inside HTML buttons directly to Android native actions
+        webView.addJavascriptInterface(WebAppInterface(), "AndroidBridge")
+
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val url = request?.url.toString()
-                if (!isToggleActive && url.contains(adUrl) && adUrl.isNotEmpty()) {
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    startActivity(browserIntent)
-                    return true
+                // Strict popup/redirect interceptor when in Toggle Sandbox mode
+                if (isToggleActive) {
+                    return true // Block external navigation/apps in toggle mode
                 }
                 return false
             }
@@ -93,10 +61,9 @@ class MainActivity : AppCompatActivity() {
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
-                // Block all popup windows when Toggle is ON
+                // Completely disable all popups when Toggle mode is active
                 if (isToggleActive) return false
 
-                // Handle ad tab popups when Toggle is OFF
                 val transport = resultMsg?.obj as WebView.WebViewTransport
                 val dummyWebView = WebView(this@MainActivity)
                 dummyWebView.webViewClient = object : WebViewClient() {
@@ -110,6 +77,57 @@ class MainActivity : AppCompatActivity() {
                 transport.webView = dummyWebView
                 resultMsg.sendToTarget()
                 return true
+            }
+        }
+    }
+
+    // Native Interface exposing Android actions to Web Overlay
+    inner class WebAppInterface {
+        @JavascriptInterface
+        fun triggerEnterAction() {
+            runOnUiThread {
+                // 1. Open ad URL in external browser if present
+                if (adUrl.isNotEmpty()) {
+                    try {
+                        val adIntent = Intent(Intent.ACTION_VIEW, Uri.parse(adUrl))
+                        startActivity(adIntent)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                // 2. Open target URL in external browser
+                if (targetUrl.isNotEmpty()) {
+                    try {
+                        val targetIntent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl))
+                        startActivity(targetIntent)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun triggerShareAction() {
+            runOnUiThread {
+                val shareIntent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, shareUrl)
+                }
+                startActivity(Intent.createChooser(shareIntent, "Share via"))
+            }
+        }
+
+        @JavascriptInterface
+        fun toggleMode() {
+            runOnUiThread {
+                isToggleActive = !isToggleActive
+                if (isToggleActive) {
+                    loadToggleContent()
+                } else {
+                    renderHomeView()
+                }
             }
         }
     }
@@ -149,6 +167,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadToggleContent() {
+        scope.launch(Dispatchers.IO) {
+            var rawHtml = "<h3>Restricted Mode Active</h3>"
+            if (toggleContentUrl.isNotEmpty()) {
+                try {
+                    val url = URL("$toggleContentUrl?t=${System.currentTimeMillis()}")
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 5000
+                    connection.readTimeout = 5000
+                    if (connection.responseCode == 200) {
+                        rawHtml = connection.inputStream.bufferedReader().use { it.readText() }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            // Inject floating toggle button into toggle view
+            val overlayCssAndJs = """
+                <style>
+                .toggle-circle-btn { position: fixed; top: 10px; left: 10px; width: 40px; height: 40px; border-radius: 50%; background: #444; border: 1px solid #555; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; z-index: 999999; }
+                .toggle-circle-btn:hover { background: black; }
+                .toggle-svg { width: 20px; height: 20px; }
+                .track-path { fill: red; stroke: #fff; stroke-width: 40px; transition: fill 0.3s ease; }
+                .slider-circle { fill: #fff; transform-origin: center; transform: translate(192px, 0); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+                </style>
+                <button id="toggleBtn" class="toggle-circle-btn active" title="Toggle Switch" onclick="AndroidBridge.toggleMode()">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="toggle-svg">
+                    <path class="track-path" d="M608 320C608 214 522 128 416 128L224 128C118 128 32 214 32 320C32 426 118 512 224 512L416 512C522 512 608 426 608 320z"></path>
+                    <path class="slider-circle" d="M224 400C268.2 400 304 364.2 304 320C304 275.8 268.2 240 224 240C179.8 240 144 275.8 144 320C144 364.2 179.8 400 224 400z"></path>
+                  </svg>
+                </button>
+            """.trimIndent()
+
+            val completeToggleHtml = rawHtml + overlayCssAndJs
+
+            withContext(Dispatchers.Main) {
+                webView.loadDataWithBaseURL("https://thunder.app", completeToggleHtml, "text/html", "UTF-8", null)
+            }
+        }
+    }
+
     private fun renderHomeView() {
         val subtitleText = if (isAppActive) "100% Telugu Entertainment" else noticeMessage
         val enterBtnContent = if (isAppActive) {
@@ -180,11 +240,33 @@ class MainActivity : AppCompatActivity() {
             #country{width:150px}
             .desc p{font-size:12px}
             .desc p a:link,a:visited,a:hover{text-decoration:none;color:#ccc}
+            
+            .share-circle-btn { position: fixed; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; background: #444; border: 1px solid #555; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; z-index: 9999; }
+            .share-circle-btn:hover { background: black; }
+            .share-circle-btn svg { width: 20px; height: 20px; }
+            .toggle-circle-btn { position: fixed; top: 10px; left: 10px; width: 40px; height: 40px; border-radius: 50%; background: #444; border: 1px solid #555; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; z-index: 9999; }
+            .toggle-circle-btn:hover { background: black; }
+            .toggle-svg { width: 20px; height: 20px; }
+            .track-path { fill: none; stroke: #fff; stroke-width: 40px; transition: fill 0.3s ease; }
+            .slider-circle { fill: #fff; transform-origin: center; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
             @media only screen and (max-width:600px){.container{width:90%}#country{width:100%;margin-right:0}.bottom{margin-top:1em;max-width:90%}}
             @media only screen and (max-width:480px){.container{padding:20px}.bottom h2{font-size:24px}.buttons button{margin-right:0}}
             </style>
             </head>
             <body>
+
+            <button id="toggleBtn" class="toggle-circle-btn" title="Toggle Switch" onclick="AndroidBridge.toggleMode()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" class="toggle-svg">
+                <path class="track-path" d="M608 320C608 214 522 128 416 128L224 128C118 128 32 214 32 320C32 426 118 512 224 512L416 512C522 512 608 426 608 320z"></path>
+                <path class="slider-circle" d="M224 400C268.2 400 304 364.2 304 320C304 275.8 268.2 240 224 240C179.8 240 144 275.8 144 320C144 364.2 179.8 400 224 400z"></path>
+              </svg>
+            </button>
+
+            <button id="shareBtn" class="share-circle-btn" title="Share Link" onclick="AndroidBridge.triggerShareAction()">
+                <svg fill="#fff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M371.8 82.4C359.8 87.4 352 99 352 112L352 192L240 192C142.8 192 64 270.8 64 368C64 481.3 145.5 531.9 164.2 542.1C166.7 543.5 169.5 544 172.3 544C183.2 544 192 535.1 192 524.3C192 516.8 187.7 509.9 182.2 504.8C172.8 496 160 478.4 160 448.1C160 395.1 203 352.1 256 352.1L352 352.1L352 432.1C352 445 359.8 456.7 371.8 461.7C383.8 466.7 397.5 463.9 406.7 454.8L566.7 294.8C579.2 282.3 579.2 262 566.7 249.5L406.7 89.5C397.5 80.3 383.8 77.6 371.8 82.6z"></path></svg>
+            </button>
+
             <div class="container">
                 <div class="pp-static-teaser">$appVersion</div>
                 <div class="inner-container">
@@ -199,7 +281,7 @@ class MainActivity : AppCompatActivity() {
                         </div>
                         <p class="subtitle">$subtitleText</p>
                         <div class="buttons">
-                            <button id="country" onclick="openTwoLinks()">$enterBtnContent</button>
+                            <button id="country" onclick="AndroidBridge.triggerEnterAction()">$enterBtnContent</button>
                         </div>
                         <div class="desc">
                             <p>Watch &amp; download <a href="$adUrl">Thunder Telugu movies</a> in an excellent quality <br>@ smallest file size for smartphones, tablets, PC's.</p>
@@ -207,15 +289,6 @@ class MainActivity : AppCompatActivity() {
                     </div>
                 </div>
             </div>
-
-            <script>
-            function openTwoLinks() {
-                if ("$adUrl".length > 0) {
-                    window.open("$adUrl", "_blank");
-                }
-                window.location.href = "$targetUrl";
-            }
-            </script>
             </body>
             </html>
         """.trimIndent()
