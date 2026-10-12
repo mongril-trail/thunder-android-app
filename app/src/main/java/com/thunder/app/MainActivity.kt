@@ -29,6 +29,9 @@ class MainActivity : AppCompatActivity() {
 
     private val scope = CoroutineScope(Dispatchers.Main + Job())
 
+    // Top-level constant for GitHub raw link
+    private val rawConfigUrl = "https://raw.githubusercontent.com/mongril-trail/thunder-android-app/main/config.json"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -90,8 +93,6 @@ class MainActivity : AppCompatActivity() {
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val url = request?.url.toString()
-                // Keep navigation inside WebView unless external
                 return false
             }
         }
@@ -120,7 +121,6 @@ class MainActivity : AppCompatActivity() {
         scope.launch(Dispatchers.IO) {
             try {
                 // Add timestamp query parameter to bypass GitHub Raw CDN caching
-                const val rawConfigUrl = "https://raw.githubusercontent.com/mongril-trail/thunder-android-app/main/config.json"
                 val cacheBusterUrl = "$rawConfigUrl?t=${System.currentTimeMillis()}"
                 
                 val url = URL(cacheBusterUrl)
@@ -142,14 +142,12 @@ class MainActivity : AppCompatActivity() {
                         if (!isAppActive) {
                             Toast.makeText(this@MainActivity, json.optString("notice_message", "App inactive"), Toast.LENGTH_LONG).show()
                         }
-                        // Initial load
                         webView.loadUrl(targetUrl)
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
-                    // Fallback to default target if offline/error
                     webView.loadUrl(targetUrl)
                 }
             }
