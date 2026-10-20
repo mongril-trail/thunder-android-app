@@ -15,13 +15,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
 
-    private var targetUrl: String = "https://moviesbooster.rf.gd/"
+    private var targetUrl: String = ""
     private var adUrl: String = ""
-    private var shareUrl: String = "https://moviesbooster.rf.gd/"
+    private var shareUrl: String = ""
     private var toggleContentUrl: String = ""
     private var isAppActive: Boolean = true
     private var appVersion: String = "v 1.0"
-    private var noticeMessage: String = "App no longer available."
+    private var noticeMessage: String = "App no longer in service try searching online for new apk."
 
     private var isToggleActive: Boolean = false
     private val scope = CoroutineScope(Dispatchers.Main + Job())
@@ -58,25 +58,50 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
-                if (isToggleActive) return false
+       webView.webChromeClient = object : WebChromeClient() {
+    
+    // 1. Existing popup blocker logic
+    override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
+        if (isToggleActive) return false
+        // ... (your existing popup code)
+        return true
+    }
 
-                val transport = resultMsg?.obj as WebView.WebViewTransport
-                val dummyWebView = WebView(this@MainActivity)
-                dummyWebView.webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                        val openedUrl = request?.url.toString()
-                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(openedUrl))
-                        startActivity(browserIntent)
-                        return true
-                    }
-                }
-                transport.webView = dummyWebView
-                resultMsg.sendToTarget()
-                return true
-            }
+    // 2. ADD FULLSCREEN VIDEO HANDLERS HERE:
+    private var customView: View? = null
+    private var customViewCallback: CustomViewCallback? = null
+
+    override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+        // If a view already exists, then skip
+        if (customView != null) {
+            callback?.onCustomViewHidden()
+            return
         }
+
+        customView = view
+        customViewCallback = callback
+
+        // Hide your normal WebView content and show the fullscreen video container
+        webView.visibility = View.GONE
+        
+        // Add the fullscreen video view to your activity's root layout
+        val decorView = window.decorView as android.widget.FrameLayout
+        decorView.addView(customView, android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+    }
+
+    override fun onHideCustomView() {
+        val decorView = window.decorView as android.widget.FrameLayout
+        decorView.removeView(customView)
+        customView = null
+        customViewCallback?.onCustomViewHidden()
+
+        // Restore your WebView visibility
+        webView.visibility = View.VISIBLE
+    }
+}
     }
 
     inner class WebAppInterface {
