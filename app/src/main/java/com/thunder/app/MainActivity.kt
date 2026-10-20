@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Message
+import android.view.View
 import android.webkit.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
